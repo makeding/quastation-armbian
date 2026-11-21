@@ -8,6 +8,12 @@ media=$(realpath "${4:?}")
 project=$(cd "$(dirname "$0")/.." && pwd)
 root="$out/rootfs"
 test ! -e "$root"
+for p in \
+  "$project/media/vendor-openmax/lib/libOMX.realtek.video.dec.mpeg2.so" \
+  "$project/media/vendor-openmax/lib/libOMX.realtek.video.enc.avc.so" \
+  "$project/media/vendor-openmax/lib/libhwse.so" \
+  "$project/media/vendor-openmax/firmware/ve1.bin" \
+  "$project/media/vendor-openmax/firmware/ve2.bin"; do test -e "$p"; done
 mkdir -p "$root"
 cleanup() { rm -rf -- "$root"; }
 trap cleanup EXIT
@@ -50,13 +56,15 @@ chroot "$root" dpkg --unpack "/var/cache/apt/archives/$(basename "$deb")"
 release=$(dpkg-deb -f "$deb" Package)
 release=${release#linux-image-}
 depmod -b "$root" "$release"
-install -d "$root/opt/qua-video/openmax/lib" "$root/etc/modules-load.d"
+install -d "$root/opt/qua-video/openmax/lib" "$root/system/vendor/modules" "$root/etc/modules-load.d"
 cp -a "$project/media/vendor-openmax/lib/." "$root/opt/qua-video/openmax/lib/"
+install -m 644 "$project/media/vendor-openmax/firmware/ve1.bin" \
+  "$project/media/vendor-openmax/firmware/ve2.bin" "$root/system/vendor/modules/"
 for name in transcode-direct-gpubob gpu-bob.so rpc-probe.so ffmpeg-omx; do
     install -m 755 "$media/$name" "$root/opt/qua-video/openmax/"
 done
 install -m 755 "$project/media/qua-transcode/transcode-mirakurun-gpu.sh" "$root/opt/qua-video/openmax/"
-printf 'qua-ion\n' > "$root/etc/modules-load.d/quastation-ve.conf"
+printf 'i2c-rtk\nqua-gpu\nqua-ion\n' > "$root/etc/modules-load.d/quastation-ve.conf"
 printf 'qua-rtk-hsotg\n' > "$root/etc/modules-load.d/quastation-usb.conf"
 install -d "$root/lib/firmware/rtlwifi" "$root/etc/systemd/network" \
   "$root/etc/ssh/sshd_config.d" "$root/etc/wpa_supplicant" \

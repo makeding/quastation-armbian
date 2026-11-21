@@ -1,3 +1,4 @@
 # Realtek OpenMAX runtime is locally supplied and is not redistributable here.
 /media/vendor-openmax/lib/*.so
+/media/vendor-openmax/firmware/*.bin
 /build/

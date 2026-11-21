@@ -8,6 +8,12 @@ fi
 root=$(realpath "$1"); kernel=$(realpath "$2"); media=$(realpath "$3")
 project=$(cd "$(dirname "$0")/.." && pwd)
 [[ "$root" != / && -f "$root/etc/armbian-release" && -f "$root/var/lib/dpkg/status" ]]
+for p in \
+    "$project/media/vendor-openmax/lib/libOMX.realtek.video.dec.mpeg2.so" \
+    "$project/media/vendor-openmax/lib/libOMX.realtek.video.enc.avc.so" \
+    "$project/media/vendor-openmax/lib/libhwse.so" \
+    "$project/media/vendor-openmax/firmware/ve1.bin" \
+    "$project/media/vendor-openmax/firmware/ve2.bin"; do test -e "$p"; done
 [[ ! -e "$root/root/.ssh/authorized_keys" && ! -e "$root/etc/wpa_supplicant/wpa_supplicant-wlan0.conf" ]] || {
     echo 'Refusing a rootfs containing device-specific credentials' >&2; exit 1;
 }
@@ -43,14 +49,16 @@ for name in rtl8192eefw.bin rtl8812aefw.bin rtl8812aefw_wowlan.bin; do
     install -m 644 "$project/firmware/rtlwifi/$name" "$root/lib/firmware/rtlwifi/$name"
 done
 
-install -d "$root/opt/qua-video/openmax/lib" "$root/etc/modules-load.d" \
+install -d "$root/opt/qua-video/openmax/lib" "$root/system/vendor/modules" "$root/etc/modules-load.d" \
     "$root/etc/systemd/system/sshd-keygen.service.d" "$root/etc/ssh/sshd_config.d" "$root/etc/systemd/network" \
     "$root/etc/systemd/system/wpa_supplicant@wlan0.service.d"
 cp -a "$project/media/vendor-openmax/lib/." "$root/opt/qua-video/openmax/lib/"
+install -m 644 "$project/media/vendor-openmax/firmware/ve1.bin" \
+    "$project/media/vendor-openmax/firmware/ve2.bin" "$root/system/vendor/modules/"
 install -m 755 "$media/transcode-direct-gpubob" "$media/gpu-bob.so" \
     "$media/rpc-probe.so" "$media/ffmpeg-omx" "$root/opt/qua-video/openmax/"
 install -m 755 "$project/media/qua-transcode/transcode-mirakurun-gpu.sh" "$root/opt/qua-video/openmax/"
-printf '%s\n' qua-ion > "$root/etc/modules-load.d/quastation-ve.conf"
+printf '%s\n' i2c-rtk qua-gpu qua-ion > "$root/etc/modules-load.d/quastation-ve.conf"
 printf '%s\n' qua > "$root/etc/hostname"
 printf '%s\n' 'LABEL=QUA_ROOT / btrfs subvol=@,compress=zstd:3,noatime,nodiscard 0 1' > "$root/etc/fstab"
 install -d "$root/usr/lib/armbian"

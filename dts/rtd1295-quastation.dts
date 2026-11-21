@@ -58,9 +58,6 @@
   device_type="pci"; #address-cells=<3>; #size-cells=<2>; #interrupt-cells=<1>;
   ranges=<0x02000000 0 0xc0000000 0xc0000000 0 0x01000000>,<0x01000000 0 0x00030000 0x00030000 0 0x00010000>;
   bus-range=<0 0xff>; linux,pci-domain=<0>; num-lanes=<1>;
-  // Provisional DMA ceiling: only physical addresses below 1 GiB have
-  // passed the live Wi-Fi transfer. Keep upper memory available to CPUs.
-  dma-ranges=<0x02000000 0 0 0 0 0x40000000>;
   interrupt-map-mask=<0 0 0 0>; interrupt-map=<0 0 0 0 &gic GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
   gpios=<&misc_gpio 18 GPIO_ACTIVE_HIGH>; clocks=<&qua_gates 0>;
   resets=<&reset2 RTD1295_RSTN_PCIE0_STITCH>,<&reset2 RTD1295_RSTN_PCIE0>,<&reset2 RTD1295_RSTN_PCIE0_CORE>,<&reset2 RTD1295_RSTN_PCIE0_POWER>,<&reset2 RTD1295_RSTN_PCIE0_NONSTICH>,<&reset2 RTD1295_RSTN_PCIE0_PHY>,<&reset4 RTD1295_RSTN_PCIE0_PHY_MDIO>;
