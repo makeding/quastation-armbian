@@ -1,0 +1,50 @@
+From a2632e816a0bfe25a2eeb9847ab605358367b143 Mon Sep 17 00:00:00 2001
+From: Qua kernel <qua-kernel@localhost>
+Date: Sun, 22 Nov 2026 16:30:26 +0900
+Subject: [PATCH] rtlwifi: fix RTL8192EE AP interrupts and beacon TX
+
+---
+ drivers/net/wireless/realtek/rtlwifi/pci.c          | 2 +-
+ drivers/net/wireless/realtek/rtlwifi/rtl8192ee/hw.c | 3 +++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/realtek/rtlwifi/pci.c b/drivers/net/wireless/realtek/rtlwifi/pci.c
+index 55f3305..83bf885 100644
+--- a/drivers/net/wireless/realtek/rtlwifi/pci.c
++++ b/drivers/net/wireless/realtek/rtlwifi/pci.c
+@@ -1624,7 +1624,7 @@ static int rtl_pci_tx(struct ieee80211_hw *hw,
+ 	__skb_queue_tail(&ring->queue, skb);
+ 
+ 	if (rtlpriv->use_new_trx_flow) {
+-		rtlpriv->cfg->ops->set_desc(hw, (u8 *)pdesc, true,
++		rtlpriv->cfg->ops->set_desc(hw, (u8 *)ptx_bd_desc, true,
+ 					    HW_DESC_OWN, &hw_queue);
+ 	} else {
+ 		rtlpriv->cfg->ops->set_desc(hw, (u8 *)pdesc, true,
+diff --git a/drivers/net/wireless/realtek/rtlwifi/rtl8192ee/hw.c b/drivers/net/wireless/realtek/rtlwifi/rtl8192ee/hw.c
+index 48a3c94..175957a 100644
+--- a/drivers/net/wireless/realtek/rtlwifi/rtl8192ee/hw.c
++++ b/drivers/net/wireless/realtek/rtlwifi/rtl8192ee/hw.c
+@@ -1719,16 +1719,19 @@ void rtl92ee_update_interrupt_mask(struct ieee80211_hw *hw,
+ {
+ 	struct rtl_priv *rtlpriv = rtl_priv(hw);
+ 	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
++	unsigned long flags;
+ 
+ 	rtl_dbg(rtlpriv, COMP_INTR, DBG_LOUD,
+ 		"add_msr:%x, rm_msr:%x\n", add_msr, rm_msr);
+ 
++	spin_lock_irqsave(&rtlpriv->locks.irq_th_lock, flags);
+ 	if (add_msr)
+ 		rtlpci->irq_mask[0] |= add_msr;
+ 	if (rm_msr)
+ 		rtlpci->irq_mask[0] &= (~rm_msr);
+ 	rtl92ee_disable_interrupt(hw);
+ 	rtl92ee_enable_interrupt(hw);
++	spin_unlock_irqrestore(&rtlpriv->locks.irq_th_lock, flags);
+ }
+ 
+ static __always_inline u8 _rtl92ee_get_chnl_group(u8 chnl)
+-- 
+2.56.0
+
