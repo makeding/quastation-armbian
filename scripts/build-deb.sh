@@ -46,9 +46,9 @@ install -D -m 0755 "$root/image/qua-usb-adbd.sh" \
 
 control="$image_root/DEBIAN/control"
 if grep -q '^Depends:' "$control"; then
-	sed -i '/^Depends:/s/$/, python3, util-linux, systemd/' "$control"
+	sed -i '/^Depends:/s/$/, python3, util-linux, systemd, bluez, firmware-realtek/' "$control"
 else
-	printf '%s\n' 'Depends: python3, util-linux, systemd' >> "$control"
+	printf '%s\n' 'Depends: python3, util-linux, systemd, bluez, firmware-realtek' >> "$control"
 fi
 size_kib=$(du -sk "$image_root" | cut -f1)
 sed -i "s/^Installed-Size:.*/Installed-Size: $size_kib/" "$control"

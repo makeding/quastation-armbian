@@ -52,6 +52,7 @@ done
 install -d "$root/opt/qua-video/openmax/lib" "$root/system/vendor/modules" "$root/etc/modules-load.d" \
     "$root/etc/systemd/system/sshd-keygen.service.d" "$root/etc/ssh/sshd_config.d" "$root/etc/systemd/network" \
     "$root/etc/systemd/system/wpa_supplicant@wlan0.service.d"
+install -D -m 644 "$project/image/qua-resolved.conf" "$root/etc/systemd/resolved.conf.d/qua.conf"
 cp -a "$project/media/vendor-openmax/lib/." "$root/opt/qua-video/openmax/lib/"
 install -m 644 "$project/media/vendor-openmax/firmware/ve1.bin" \
     "$project/media/vendor-openmax/firmware/ve2.bin" "$root/system/vendor/modules/"

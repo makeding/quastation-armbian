@@ -1,0 +1,31 @@
+From 92f5971bd34a3864e93954856068a31d0ebc1582 Mon Sep 17 00:00:00 2001
+From: huggy <i@huggy.moe>
+Date: Sun, 22 Nov 2026 18:50:12 +0900
+Subject: [PATCH] serial: 8250_dw: reset Qua Station UART2 on probe
+
+---
+ drivers/tty/serial/8250/8250_dw.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/tty/serial/8250/8250_dw.c b/drivers/tty/serial/8250/8250_dw.c
+index 51d026f..0a4f06e 100644
+--- a/drivers/tty/serial/8250/8250_dw.c
++++ b/drivers/tty/serial/8250/8250_dw.c
+@@ -728,6 +728,14 @@ static int dw8250_probe(struct platform_device *pdev)
+ 	if (IS_ERR(data->rst))
+ 		return PTR_ERR(data->rst);
+ 
++	if (device_property_match_string(dev, "compatible",
++					 "kddi,quastation-uart2") >= 0) {
++		err = reset_control_assert(data->rst);
++		if (err)
++			return dev_err_probe(dev, err, "failed to assert reset\n");
++		udelay(10);
++	}
++
+ 	err = reset_control_deassert(data->rst);
+ 	if (err)
+ 		return dev_err_probe(dev, err, "failed to deassert resets\n");
+-- 
+2.56.0
+

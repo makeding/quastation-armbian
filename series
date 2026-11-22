@@ -1,2 +1,4 @@
 0001-quastation-existing-c.patch
 0002-rtlwifi-rtl8192ee-ap-tx.patch
+0003-bluetooth-rtl8761atv-uart.patch
+0004-serial-quastation-uart2-reset.patch

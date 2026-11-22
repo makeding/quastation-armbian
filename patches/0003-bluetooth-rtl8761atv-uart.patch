@@ -1,0 +1,103 @@
+From 056fa934b00008fae89cd6fd4d7ae4899392276f Mon Sep 17 00:00:00 2001
+From: huggy <i@huggy.moe>
+Date: Sun, 22 Nov 2026 18:07:52 +0900
+Subject: [PATCH] Bluetooth: btrtl: support RTL8761ATV over H5 UART
+
+---
+ drivers/bluetooth/btrtl.c  |  6 ++++++
+ drivers/bluetooth/hci_h5.c | 27 ++++++++++++++++++++++-----
+ 2 files changed, 28 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/bluetooth/btrtl.c b/drivers/bluetooth/btrtl.c
+index d298133..915c88b 100644
+--- a/drivers/bluetooth/btrtl.c
++++ b/drivers/bluetooth/btrtl.c
+@@ -213,6 +213,12 @@ static const struct id_table ic_id_table[] = {
+ 	  .fw_name  = "rtl_bt/rtl8761a_fw",
+ 	  .cfg_name = "rtl_bt/rtl8761a_config",
+ 	  .hw_info  = "rtl8761au" },
++	{ IC_INFO(RTL_ROM_LMP_8761A, 0xa, 0x6, HCI_UART),
++	  .config_needed = false,
++	  .has_rom_version = true,
++	  .fw_name  = "rtl_bt/rtl8761a_fw",
++	  .cfg_name = "rtl_bt/rtl8761a_config",
++	  .hw_info  = "rtl8761atv" },
+ 
+ 	/* 8761B */
+ 	{ IC_INFO(RTL_ROM_LMP_8761A, 0xb, 0xa, HCI_UART),
+diff --git a/drivers/bluetooth/hci_h5.c b/drivers/bluetooth/hci_h5.c
+index b1999e1..75c4dee 100644
+--- a/drivers/bluetooth/hci_h5.c
++++ b/drivers/bluetooth/hci_h5.c
+@@ -60,6 +60,7 @@ enum {
+ 	H5_WAKEUP_DISABLE,	/* Device cannot wake host */
+ 	H5_HW_FLOW_CONTROL,	/* Use HW flow control */
+ 	H5_CRC,			/* Use CRC */
++	H5_RTL_8761A_FIXED_BAUD,
+ };
+ 
+ struct h5 {
+@@ -106,6 +107,7 @@ struct h5 {
+ 
+ enum h5_driver_info {
+ 	H5_INFO_WAKEUP_DISABLE = BIT(0),
++	H5_INFO_RTL_8761A_FIXED_BAUD = BIT(1),
+ };
+ 
+ struct h5_vnd {
+@@ -890,6 +892,8 @@ static int h5_serdev_probe(struct serdev_device *serdev)
+ 
+ 	if (data->driver_info & H5_INFO_WAKEUP_DISABLE)
+ 		set_bit(H5_WAKEUP_DISABLE, &h5->flags);
++	if (data->driver_info & H5_INFO_RTL_8761A_FIXED_BAUD)
++		set_bit(H5_RTL_8761A_FIXED_BAUD, &h5->flags);
+ 
+ 	h5->enable_gpio = devm_gpiod_get_optional(dev, "enable", GPIOD_OUT_LOW);
+ 	if (IS_ERR(h5->enable_gpio))
+@@ -948,11 +952,17 @@ static int h5_btrtl_setup(struct h5 *h5)
+ 	if (IS_ERR(btrtl_dev))
+ 		return PTR_ERR(btrtl_dev);
+ 
+-	err = btrtl_get_uart_settings(h5->hu->hdev, btrtl_dev,
+-				      &controller_baudrate, &device_baudrate,
+-				      &flow_control);
+-	if (err)
+-		goto out_free;
++	if (test_bit(H5_RTL_8761A_FIXED_BAUD, &h5->flags)) {
++		controller_baudrate = 115200;
++		device_baudrate = 0x0252c014;
++		flow_control = false;
++	} else {
++		err = btrtl_get_uart_settings(h5->hu->hdev, btrtl_dev,
++					      &controller_baudrate, &device_baudrate,
++					      &flow_control);
++		if (err)
++			goto out_free;
++	}
+ 
+ 	baudrate_data = cpu_to_le32(device_baudrate);
+ 	skb = __hci_cmd_sync(h5->hu->hdev, 0xfc17, sizeof(baudrate_data),
+@@ -1121,6 +1131,11 @@ static const struct h5_device_data h5_data_rtl8723bs = {
+ 	.driver_info = H5_INFO_WAKEUP_DISABLE,
+ 	.vnd = &rtl_vnd,
+ };
++
++static const struct h5_device_data h5_data_rtl8761atv = {
++	.driver_info = H5_INFO_WAKEUP_DISABLE | H5_INFO_RTL_8761A_FIXED_BAUD,
++	.vnd = &rtl_vnd,
++};
+ #endif
+ 
+ #ifdef CONFIG_ACPI
+@@ -1141,6 +1156,8 @@ static const struct dev_pm_ops h5_serdev_pm_ops = {
+ 
+ static const struct of_device_id rtl_bluetooth_of_match[] = {
+ #ifdef CONFIG_BT_HCIUART_RTL
++	{ .compatible = "realtek,rtl8761atv-bt",
++	  .data = (const void *)&h5_data_rtl8761atv },
+ 	{ .compatible = "realtek,rtl8822cs-bt",
+ 	  .data = (const void *)&h5_data_rtl8822cs },
+ 	{ .compatible = "realtek,rtl8723bs-bt",
+-- 
+2.56.0
+

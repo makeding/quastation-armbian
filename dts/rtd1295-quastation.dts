@@ -13,10 +13,9 @@
 #include "rtd1295.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 / {
- model = "KDDI Qua Station maintenance";
  compatible = "kddi,quastation", "realtek,rtd1295";
  memory@20000000 { device_type="memory"; reg=<0x20000000 0x60000000>; };
- aliases { serial0= &uart0; };
+ aliases { serial0= &uart0; serial1= &uart1; };
  chosen { stdout-path="serial0:115200n8"; bootargs="console=ttyS0,115200 earlycon=uart8250,mmio32,0x98007800 maxcpus=1 rdinit=/init clk_ignore_unused"; };
  qua_gates: clock-controller@9800000c {
   compatible="kddi,quastation-gates"; reg=<0x9800000c 8>; clocks=<&osc27M>,<&emmc_ciu>; #clock-cells=<1>;
@@ -32,7 +31,7 @@
   gpio-controller; #gpio-cells=<2>; interrupt-controller; #interrupt-cells=<2>;
   interrupt-parent=<&irqmux>; interrupts=<0 19>,<0 20>;
   fan-enable { gpio-hog; gpios=<11 GPIO_ACTIVE_HIGH>,<12 GPIO_ACTIVE_HIGH>; output-high; line-name="fan-full-speed"; };
-  wifi-enable { gpio-hog; gpios=<63 GPIO_ACTIVE_HIGH>; output-high; line-name="wifi-radio-enable"; };
+  zw { gpio-hog; gpios=<13 GPIO_ACTIVE_LOW>,<59 GPIO_ACTIVE_HIGH>; output-high; };
  };
  iso_gpio: gpio@98007100 {
   // Not needed for PCIe reset or fan/radio hogs. Its shared IRQ window
@@ -103,6 +102,20 @@
  };
 };
 &uart0 { status="okay"; interrupt-parent=<&irqmux>; interrupts=<1 2>; };
+&uart1 {
+ status="okay"; interrupt-parent=<&irqmux>; interrupts=<0 3>;
+ /delete-property/ clock-frequency;
+ clocks=<&qua_gates 13>;
+ pinctrl-names="default"; pinctrl-0=<&qua_uart1_pins>;
+ bluetooth { compatible="realtek,rtl8761atv-bt"; enable-gpios=<&misc_gpio 63 GPIO_ACTIVE_HIGH>; };
+};
+&uart2 {
+ status="okay"; interrupt-parent=<&irqmux>; interrupts=<0 8>;
+ compatible="kddi,quastation-uart2", "snps,dw-apb-uart";
+ /delete-property/ clock-frequency;
+ clocks=<&qua_gates 14>;
+ pinctrl-names="default"; pinctrl-0=<&qua_uart2_pins>;
+};
 
 // Native Realtek eMMC host: register resources follow the original Qua DTS.
 &{/emmc@98012000} {
@@ -125,7 +138,6 @@
  phase_tuning = <0 0>;
 };
 
-/ { model = "KDDI Qua Station native eMMC"; };
 &pcie1 { status = "disabled"; };
 
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -222,7 +234,6 @@
 };
 
 / {
-	model = "KDDI Qua Station EHCI plus USB0 and USB1 host candidate";
 
 	usb0_vbus: regulator-usb0-vbus {
 		compatible = "regulator-fixed";
@@ -347,7 +358,6 @@
 };
 
 / {
-	model = "KDDI Qua Station GPU trial";
 	qua_gpu_pll: gpu-pll-clock {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -393,12 +403,20 @@
 &iso {
 	qua_i2c0_pinmux: pinmux@310 {
 		compatible = "pinctrl-single";
-		reg = <0x310 4>;
-		#pinctrl-cells = <1>;
+		reg = <0x310 8>;
+		#pinctrl-cells = <2>;
 		pinctrl-single,register-width = <32>;
-		pinctrl-single,function-mask = <0x03c00000>;
+		pinctrl-single,function-mask = <1>;
+		pinctrl-single,bit-per-mux;
 		qua_i2c0_pins: i2c0-pins {
-			pinctrl-single,pins = <0 0x01400000>;
+			pinctrl-single,bits = <0 0x01400000 0x03c00000>;
+		};
+		qua_uart1_pins: uart1-pins {
+			pinctrl-single,bits = <0 0x00154000 0x003fc000>;
+		};
+		qua_uart2_pins: uart2-pins {
+			pinctrl-single,bits = <0 0x00000005 0x0000000f>,
+					      <4 0x40000900 0xc0000fc0>;
 		};
 	};
 

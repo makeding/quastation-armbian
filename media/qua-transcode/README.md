@@ -26,11 +26,15 @@ source there, applies the NV12 patch, and builds the four runtime artifacts.
 sudo ./media/qua-transcode/install.sh /absolute/build-output
 ```
 
-The Realtek OpenMAX `.so` runtime must be supplied locally in
-`media/vendor-openmax/lib`; it is intentionally excluded from this repository
-because its redistribution terms were not included with the vendor bundle.
-`SHA256SUMS` records the expected local runtime files. Installation copies
-that runtime and places the built components under `/opt/qua-video/openmax`.
+The Realtek OpenMAX `.so` runtime and VE1/VE2 firmware must be supplied locally
+in `media/vendor-openmax/lib` and `media/vendor-openmax/firmware`; run
+`media/vendor-openmax/fetch-libraries.sh` to retrieve and verify the pinned
+vendor files and restore the codec soname links. These vendor binaries are
+intentionally excluded from this repository because their redistribution terms
+were not included with the vendor bundle. `SHA256SUMS` records their expected
+hashes. Installation places the runtime under `/opt/qua-video/openmax` and the
+firmware at `/system/vendor/modules/ve1.bin` and `/system/vendor/modules/ve2.bin`,
+the absolute paths opened by the Realtek decoder and encoder libraries.
 The wrapper also needs the system `/usr/bin/ffmpeg` with the `h264_metadata`
 bitstream filter. `/dev/vpu`, `/dev/ion` and the Panfrost render node must be
 available.

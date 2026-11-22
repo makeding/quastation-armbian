@@ -43,10 +43,10 @@ static int qua_pll_is_prepared(struct clk_hw *hw) { return !!(readl(to_qua_pll(h
 static const struct clk_ops qua_pll_ops = { .prepare=qua_pll_prepare, .unprepare=qua_pll_unprepare, .is_prepared=qua_pll_is_prepared, .recalc_rate=qua_pll_recalc, .determine_rate=qua_pll_determine, .set_rate=qua_pll_set };
 static int qua_clocks_probe(struct platform_device *pdev)
 {
- static const char * const names[] = { "qua-pcie0", "qua-pcie1", "qua-emmc", "qua-emmc-ip", "qua-usb", "qua-gpu", "qua-ve1", "qua-ve2", "qua-sysh", "qua-pll-ve1", "qua-pll-ve2", "qua-cr", "qua-sd-ip" };
+ static const char * const names[] = { "qua-pcie0", "qua-pcie1", "qua-emmc", "qua-emmc-ip", "qua-usb", "qua-gpu", "qua-ve1", "qua-ve2", "qua-sysh", "qua-pll-ve1", "qua-pll-ve2", "qua-cr", "qua-sd-ip", "qua-uart1", "qua-uart2" };
  static const u8 offsets[] = {0,4,0,0,0,0}, bits[] = {1,5,24,28,4,11};
  static const char * const veparents[] = {"qua-sysh", "qua-pll-ve1", "qua-pll-ve2", "qua-pll-ve2"};
- struct device *dev=&pdev->dev; struct clk_hw_onecell_data *d; void __iomem *base, *crt; unsigned int i; int ret;
+ struct device *dev=&pdev->dev; struct clk_hw_onecell_data *d; struct clk_hw *uart_ref; void __iomem *base, *crt; unsigned int i; int ret;
  base=devm_platform_ioremap_resource(pdev,0); if (IS_ERR(base)) return PTR_ERR(base);
  crt=devm_ioremap(dev,0x98000000,0x600); if (!crt) return -ENOMEM;
  d=devm_kzalloc(dev,struct_size(d,hws,ARRAY_SIZE(names)),GFP_KERNEL); if (!d) return -ENOMEM;
@@ -84,6 +84,14 @@ static int qua_clocks_probe(struct platform_device *pdev)
         of_clk_get_parent_name(dev->of_node, 0), 0,
         base, 31, 0, &qua_gate_lock);
  if (IS_ERR(d->hws[12])) return PTR_ERR(d->hws[12]);
+ uart_ref = devm_clk_hw_register_fixed_rate(dev, "qua-uart-ref", NULL, 0, 432000000);
+ if (IS_ERR(uart_ref)) return PTR_ERR(uart_ref);
+ for (i = 13; i <= 14; i++) {
+  d->hws[i] = devm_clk_hw_register_gate(dev, names[i],
+         "qua-uart-ref", 0,
+         base + 4, i == 13 ? 28 : 27, 0, &qua_gate_lock);
+  if (IS_ERR(d->hws[i])) return PTR_ERR(d->hws[i]);
+ }
  return devm_of_clk_add_hw_provider(dev,of_clk_hw_onecell_get,d);
 }
 static const struct of_device_id qua_clock_match[]={{.compatible="kddi,quastation-gates"},{}};

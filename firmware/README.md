@@ -6,6 +6,7 @@ preserving the relative directory names.
 | File | Device | Source |
 |---|---|---|
 | `rtlwifi/rtl8192eefw.bin` | Qua Station RTL8192EE PCIe Wi-Fi | Debian `firmware-realtek_20250410-2_all.deb`, retained builder package |
+| `rtl_bt/rtl8761a_fw.bin` | Qua Station RTL8761ATV UART Bluetooth | Debian `firmware-realtek_20250410-2_all.deb` |
 | `rtlwifi/rtl8812aefw.bin`, `rtlwifi/rtl8812aefw_wowlan.bin` | Second RTL8812AE radio, presently disabled in accepted DTS | Same Debian firmware-realtek package |
 | `regulatory.db`, `regulatory.db.p7s` | Signed wireless regulatory database | Debian `wireless-regdb_2026.05.30-1~deb13u1_all.deb` |
 

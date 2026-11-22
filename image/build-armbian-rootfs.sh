@@ -29,7 +29,8 @@ chmod 755 "$root/usr/sbin/policy-rc.d"
 chroot "$root" apt-get update
 chroot "$root" apt-get install -y --no-install-recommends \
     adbd ca-certificates curl ffmpeg libegl1 libgles2 libgl1-mesa-dri libdrm2 \
-    libatomic1 zlib1g python3 btrfs-progs openssh-server wpasupplicant systemd-resolved
+    libatomic1 zlib1g python3 btrfs-progs openssh-server wpasupplicant systemd-resolved systemd-timesyncd \
+    bluez firmware-realtek
 # Resolve the actual package dependency expression, including alternatives and versions.
 depends=$(dpkg-deb -f "$deb" Depends)
 chroot "$root" apt-get satisfy -y --no-install-recommends "$depends"
@@ -69,6 +70,7 @@ printf 'qua-rtk-hsotg\n' > "$root/etc/modules-load.d/quastation-usb.conf"
 install -d "$root/lib/firmware/rtlwifi" "$root/etc/systemd/network" \
   "$root/etc/ssh/sshd_config.d" "$root/etc/wpa_supplicant" \
   "$root/etc/systemd/system/multi-user.target.wants"
+install -D -m 644 "$project/image/qua-resolved.conf" "$root/etc/systemd/resolved.conf.d/qua.conf"
 install -m 644 "$project"/firmware/rtlwifi/*.bin "$root/lib/firmware/rtlwifi/"
 printf '%s\n' \
   'LABEL=QUA_ROOT / btrfs subvol=@,compress=zstd:3,noatime,nodiscard 0 1' \
