@@ -15,6 +15,36 @@ KDDI Qua Station（Realtek RTD1295 / ARM64）向けの Linux 7.3.4 メインラ�
 
 ## 2. 適応状況
 
+RAM は `0x00000000..0x7fffffff` の 2 GiB を宣言します。低位 512 MiB
+全体を除外せず、U-Boot が FDT に残す起動コード・音声ファームウェアの
+予約、RPC/TEE、ACPU IDMEM (`0x10000000..0x10013fff`) とリセットコード
+(`0x1fc00000..0x1fc00fff`) を保持します。GPU/VE/ION は既存の 128 MiB
+CMA を使用し、旧 BSP の固定 ION ヒープを新たに割り当てません。
+受け入れ確認は再起動後の RAM マップ、MemTotal、CMA、四 CPU、USB ADB、
+および既存 GPU/VE デバイスで行います。
+
+### v-7.3.4-7：既存環境の四 CPU 有効化
+
+2 GiB の RAM 宣言と四 CPU を有効にした構成は実機で確認済みです。
+Linux の MemTotal は約 1.86 GiB で、1.5 GiB の読み書きと ION DMA
+割り当てを確認しています。128 MiB の CMA は維持します。
+
+旧環境で `/proc/cmdline` に `maxcpus=1` が残る場合は、カーネルの更新
+だけでは解除されません。[Release](https://github.com/makeding/quastation-armbian/releases/tag/v-7.3.4-7)
+添付の `qua-enable-smp.tar.gz` を対象の Qua に転送し、次を実行します。
+
+```sh
+tar -xzf qua-enable-smp.tar.gz
+sudo python3 enable-smp.py /var/lib/qua-kernel/smp-environment-before-v7
+sudo reboot
+cat /sys/devices/system/cpu/online
+```
+
+`0-3` なら四 CPU です。このツールは両 factory 環境とレスキューの
+インポート用環境から `maxcpus=1` だけを削除し、元の環境を指定先に
+保存します。バックアップには個体別データがあるため公開しないでください。
+ソースは [qua-rescue-uboot/scripts](https://github.com/makeding/qua-rescue-uboot/tree/qua-rescue/scripts) で管理します。
+
 | 領域 | 状態 | 概要・対象コンポーネント |
 | --- | --- | --- |
 | CPU / クロック / 割り込み / サーマル | 対応済み | `clk-quastation*`、`irq-quastation`、`rtd129x-quastation-thermal` |
