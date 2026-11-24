@@ -10,11 +10,14 @@
 // Storage-only integration trial, without pending CPU/DVFS/USB DT changes.
 /dts-v1/;
 /memreserve/ 0x22000000 0x00200000;
+/* Resident ACPU IDMEM and reset trampoline (BSP memory.h). */
+/memreserve/ 0x10000000 0x00014000;
+/memreserve/ 0x1fc00000 0x00001000;
 #include "rtd1295.dtsi"
 #include <dt-bindings/gpio/gpio.h>
 / {
  compatible = "kddi,quastation", "realtek,rtd1295";
- memory@20000000 { device_type="memory"; reg=<0x20000000 0x60000000>; };
+ memory@0 { device_type="memory"; reg=<0x00000000 0x80000000>; };
  aliases { serial0= &uart0; serial1= &uart1; };
  chosen { stdout-path="serial0:115200n8"; bootargs="console=ttyS0,115200 earlycon=uart8250,mmio32,0x98007800 rdinit=/init clk_ignore_unused"; };
  qua_gates: clock-controller@9800000c {
