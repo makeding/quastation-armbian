@@ -47,13 +47,17 @@ cat /sys/devices/system/cpu/online
 
 | 領域 | 状態 | 概要・対象コンポーネント |
 | --- | --- | --- |
-| CPU / クロック / 割り込み / サーマル | 対応済み | `clk-quastation*`、`irq-quastation`、`rtd129x-quastation-thermal` |
+| CPU / クロック / 割り込み / サーマル | 対応済み | Cortex-A53 四 CPU（`online=0-3`）、`clk-quastation*`、`irq-quastation`、`rtd129x-quastation-thermal` |
+| メモリ | 対応済み | 物理 2 GiB、Linux の MemTotal 約 1.86 GiB、GPU/VE 用 128 MiB CMA |
 | GPIO / LED | 対応済み | `qua-iso-gpio`、`gpio-leds` |
 | eMMC / SD / SATA | 対応済み | `rtkemmc-quastation`、`rtk-sdmmc`、`ahci-quastation` |
 | USB ホスト / USB ADB ガジェット | 対応済み | DWC3、`kddi,quastation-ehci`、DWC2 ペリフェラル + `qua-usb-adbd` |
 | PCIe / Wi-Fi | 対応済み | `pcie-rtd129x-slot1` / `slot2`、Realtek 無線ファームウェア（`firmware/rtlwifi/`） |
+| Bluetooth | 対応済み | RTL8761ATV、UART2 / H5。ファームウェア読み込み、`hci0` 初期化、BlueZ のコントローラー起動を実機で確認 |
+| LTE モデム | 対応済み | WWHC060、USB AT / CDC Ethernet、PPP。SMS / VoLTE は別パッケージの HuaStation とモデム側修正を利用 |
 | GPU / 動画エンジン / トランスコード | 対応済み（制約あり） | `qua-gpu`（Mali-T820 / Panfrost）、`video/ve1`、`video/ion`、`media/qua-transcode/` |
-| RAM メンテナンス / USB 導入経路 | 検証中 | `QuaMaintenance` initramfs と `install-over-usb.sh` は工場出荷実機での E2E 受け入れ検証を継続中（詳細は [image/README.md](image/README.md)） |
+| RAM メンテナンス / USB 復旧 | 対応済み | レスキュー U-Boot の USB コンソール、`QuaMaintenance` の RAM 起動と USB ADB 接続を実機で確認 |
+| 未導入機への一括インストール | 検証中 | `install-over-usb.sh` を使う工場出荷状態からの全工程（詳細は [image/README.md](image/README.md)） |
 
 - `media/vendor-openmax/lib/` の Realtek OpenMAX ランタイムは再配布条件が不明なためリポジトリには同梱せず、ビルド時に外部取得またはローカル配置します。
 - 動画パイプラインおよび `ffmpeg-omx` の既知制約（1 フィールド補間による 29.97fps 出力等）は [media/qua-transcode/README.md](media/qua-transcode/README.md) を参照してください。
