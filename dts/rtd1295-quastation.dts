@@ -16,7 +16,7 @@
  compatible = "kddi,quastation", "realtek,rtd1295";
  memory@20000000 { device_type="memory"; reg=<0x20000000 0x60000000>; };
  aliases { serial0= &uart0; serial1= &uart1; };
- chosen { stdout-path="serial0:115200n8"; bootargs="console=ttyS0,115200 earlycon=uart8250,mmio32,0x98007800 maxcpus=1 rdinit=/init clk_ignore_unused"; };
+ chosen { stdout-path="serial0:115200n8"; bootargs="console=ttyS0,115200 earlycon=uart8250,mmio32,0x98007800 rdinit=/init clk_ignore_unused"; };
  qua_gates: clock-controller@9800000c {
   compatible="kddi,quastation-gates"; reg=<0x9800000c 8>; clocks=<&osc27M>,<&emmc_ciu>; #clock-cells=<1>;
  };
